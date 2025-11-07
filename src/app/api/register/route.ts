@@ -2,13 +2,18 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+interface User {
+  username: string;
+  password?: string;
+}
+
 const dbPath = path.join(process.cwd(), 'db.json');
 
 // Helper to read from db.json
 const readDb = () => {
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(data) as { users: User[] };
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
       return { users: [] };
@@ -19,7 +24,7 @@ const readDb = () => {
 
 // Helper to write to db.json
 // NOTE: This will not work on Vercel's read-only filesystem in production.
-const writeDb = (data) => {
+const writeDb = (data: { users: User[] }) => {
   try {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
   } catch (error) {
@@ -32,11 +37,11 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
     const db = readDb();
 
-    if (db.users.find(u => u.username === username)) {
+    if (db.users.find((u: User) => u.username === username)) {
       return new NextResponse('User already exists', { status: 400 });
     }
 
-    const newUser = { username, password }; // In a real app, hash the password!
+    const newUser: User = { username, password }; // In a real app, hash the password!
     db.users.push(newUser);
     writeDb(db);
 

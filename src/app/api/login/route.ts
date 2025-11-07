@@ -3,6 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 
+interface User {
+  username: string;
+  password?: string; // Password might not always be present, e.g., when verifying JWT
+}
+
 const dbPath = path.join(process.cwd(), 'db.json');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
@@ -10,7 +15,7 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret_key';
 const readDb = () => {
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(data) as { users: User[] };
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
       return { users: [] };
@@ -24,7 +29,7 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
     const db = readDb();
 
-    const user = db.users.find(u => u.username === username && u.password === password);
+    const user = db.users.find((u: User) => u.username === username && u.password === password);
 
     if (!user) {
       return new NextResponse('Invalid credentials', { status: 400 });
