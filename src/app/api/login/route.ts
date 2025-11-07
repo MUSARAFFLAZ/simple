@@ -11,8 +11,8 @@ const readDb = () => {
   try {
     const data = fs.readFileSync(dbPath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
       return { users: [] };
     }
     throw error;
